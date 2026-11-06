@@ -14,7 +14,7 @@
   <!-- SEO -->
   <title>LinkSafe — AI-Powered Phishing URL Detection</title>
   <meta name="description"
-    content="Analyze URLs with machine learning. LinkSafe uses a trained {{ model_name }} model to detect potentially suspicious phishing links in seconds." />
+    content="Analyze URLs with machine learning. LinkSafe uses a trained HistGradientBoosting model to detect potentially suspicious phishing links in seconds." />
   <meta name="keywords" content="phishing detection, URL scanner, machine learning, cybersecurity, AI, safe browsing" />
   <meta name="robots" content="index, follow" />
 
@@ -36,10 +36,10 @@
       --bg-card-hover: #181d32;
       --bg-input: #1a1f38;
 
-      --accent-violet: #7c3aed;
-      --accent-indigo: #4f46e5;
-      --accent-cyan: #06b6d4;
-      --accent-purple: #9333ea;
+      --accent-violet: #0e7490;
+      --accent-indigo: #1d4ed8;
+      --accent-cyan: #22d3ee;
+      --accent-purple: #0369a1;
 
       --safe-green: #10b981;
       --safe-green-dim: #064e3b;
@@ -53,7 +53,7 @@
 
       --border-subtle: rgba(148, 163, 184, 0.08);
       --border-mid: rgba(148, 163, 184, 0.14);
-      --border-accent: rgba(124, 58, 237, 0.35);
+      --border-accent: rgba(14, 116, 144, 0.35);
 
       --radius-sm: 10px;
       --radius-md: 16px;
@@ -61,8 +61,8 @@
       --radius-xl: 28px;
 
       --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
-      --shadow-glow-v: 0 0 40px rgba(124, 58, 237, 0.18);
-      --shadow-glow-c: 0 0 40px rgba(6, 182, 212, 0.14);
+      --shadow-glow-v: 0 0 40px rgba(14, 116, 144, 0.18);
+      --shadow-glow-c: 0 0 40px rgba(34, 211, 238, 0.14);
 
       --transition: 0.22s cubic-bezier(0.4, 0, 0.2, 1);
       --font: 'Satoshi', -apple-system, sans-serif;
@@ -101,7 +101,7 @@
       left: -20%;
       width: 70%;
       height: 70%;
-      background: radial-gradient(ellipse, rgba(79, 70, 229, 0.07) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(29, 78, 216, 0.07) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
       animation: bgFloat 18s ease-in-out infinite alternate;
@@ -114,7 +114,7 @@
       right: -15%;
       width: 60%;
       height: 60%;
-      background: radial-gradient(ellipse, rgba(6, 182, 212, 0.05) 0%, transparent 70%);
+      background: radial-gradient(ellipse, rgba(34, 211, 238, 0.05) 0%, transparent 70%);
       pointer-events: none;
       z-index: 0;
       animation: bgFloat 22s ease-in-out infinite alternate-reverse;
@@ -164,7 +164,7 @@
        TYPOGRAPHY HELPERS
        ================================================================ */
     .gradient-text {
-      background: linear-gradient(135deg, #a78bfa 0%, #6366f1 40%, #06b6d4 100%);
+      background: linear-gradient(135deg, #67e8f9 0%, #3b82f6 40%, #22d3ee 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -239,7 +239,7 @@
       justify-content: center;
       font-size: 17px;
       flex-shrink: 0;
-      box-shadow: 0 0 16px rgba(124, 58, 237, 0.45);
+      box-shadow: 0 0 16px rgba(14, 116, 144, 0.45);
     }
 
     .nav-logo-text {
@@ -277,7 +277,7 @@
       padding: 7px 18px;
       border-radius: var(--radius-sm);
       font-weight: 600;
-      box-shadow: 0 2px 12px rgba(124, 58, 237, 0.35);
+      box-shadow: 0 2px 12px rgba(14, 116, 144, 0.35);
       transition: opacity var(--transition), transform var(--transition);
     }
 
@@ -384,11 +384,11 @@
       gap: 8px;
       padding: 6px 14px;
       border-radius: 100px;
-      border: 1px solid rgba(124, 58, 237, 0.35);
-      background: rgba(124, 58, 237, 0.08);
+      border: 1px solid rgba(14, 116, 144, 0.35);
+      background: rgba(14, 116, 144, 0.08);
       font-size: 0.78rem;
       font-weight: 600;
-      color: #c4b5fd;
+      color: #a5f3fc;
       letter-spacing: 0.04em;
       margin-bottom: 28px;
     }
@@ -458,12 +458,12 @@
       font-weight: 700;
       cursor: pointer;
       transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+      box-shadow: 0 4px 20px rgba(14, 116, 144, 0.4);
     }
 
     .btn-primary:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(124, 58, 237, 0.5);
+      box-shadow: 0 8px 28px rgba(14, 116, 144, 0.5);
       opacity: 0.93;
     }
 
@@ -568,7 +568,7 @@
       font-size: 2.2rem;
       font-weight: 900;
       letter-spacing: -0.03em;
-      background: linear-gradient(135deg, #a78bfa, #818cf8);
+      background: linear-gradient(135deg, #67e8f9, #60a5fa);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -667,7 +667,7 @@
 
     #url-input:focus {
       border-color: var(--accent-violet);
-      box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.18);
+      box-shadow: 0 0 0 3px rgba(14, 116, 144, 0.18);
     }
 
     .scanner-btn {
@@ -681,7 +681,7 @@
       cursor: pointer;
       white-space: nowrap;
       transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.38);
+      box-shadow: 0 4px 20px rgba(14, 116, 144, 0.38);
       display: flex;
       align-items: center;
       gap: 8px;
@@ -689,7 +689,7 @@
 
     .scanner-btn:hover {
       transform: translateY(-2px);
-      box-shadow: 0 8px 28px rgba(124, 58, 237, 0.52);
+      box-shadow: 0 8px 28px rgba(14, 116, 144, 0.52);
     }
 
     .scanner-btn:active {
@@ -771,7 +771,7 @@
     }
 
     .result-card.result-safe .result-top {
-      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.06));
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(34, 211, 238, 0.06));
       border-bottom: 1px solid rgba(16, 185, 129, 0.15);
     }
 
@@ -1130,7 +1130,7 @@
       font-weight: 800;
       color: rgba(255, 255, 255, 0.7);
       letter-spacing: 0.1em;
-      box-shadow: 0 4px 20px rgba(124, 58, 237, 0.4);
+      box-shadow: 0 4px 20px rgba(14, 116, 144, 0.4);
       position: relative;
       z-index: 1;
     }
@@ -1218,7 +1218,7 @@
       width: 40px;
       height: 40px;
       border-radius: 12px;
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(79, 70, 229, 0.2));
+      background: linear-gradient(135deg, rgba(14, 116, 144, 0.2), rgba(29, 78, 216, 0.2));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1298,7 +1298,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(79, 70, 229, 0.1));
+      background: linear-gradient(135deg, rgba(14, 116, 144, 0.15), rgba(29, 78, 216, 0.1));
       border-radius: 14px;
     }
 
@@ -1409,12 +1409,12 @@
       align-items: center;
       gap: 6px;
       padding: 5px 12px;
-      background: rgba(124, 58, 237, 0.12);
-      border: 1px solid rgba(124, 58, 237, 0.25);
+      background: rgba(14, 116, 144, 0.12);
+      border: 1px solid rgba(14, 116, 144, 0.25);
       border-radius: 100px;
       font-size: 0.75rem;
       font-weight: 600;
-      color: #c4b5fd;
+      color: #a5f3fc;
       margin-bottom: 16px;
     }
 
@@ -1543,7 +1543,7 @@
       width: 44px;
       height: 44px;
       border-radius: 14px;
-      background: linear-gradient(135deg, rgba(124, 58, 237, 0.2), rgba(79, 70, 229, 0.15));
+      background: linear-gradient(135deg, rgba(14, 116, 144, 0.2), rgba(29, 78, 216, 0.15));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1761,16 +1761,6 @@
         transform: rotate(90deg);
       }
     }
-    .scanner-error {
-      margin-top: 16px;
-      color: var(--danger-red);
-      font-size: 0.9rem;
-    }
-
-    .result-status-label {
-      overflow-wrap: anywhere;
-      font-size: clamp(1.6rem, 5vw, 2.6rem);
-    }
   </style>
 </head>
 
@@ -1860,16 +1850,16 @@
             <svg viewBox="0 0 460 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;">
               <defs>
                 <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#7c3aed" stop-opacity="0.9" />
-                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.9" />
+                  <stop offset="0%" stop-color="#0e7490" stop-opacity="0.9" />
+                  <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.9" />
                 </linearGradient>
                 <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#4f46e5" stop-opacity="0.8" />
-                  <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.8" />
+                  <stop offset="0%" stop-color="#1d4ed8" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="#0e7490" stop-opacity="0.8" />
                 </linearGradient>
                 <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stop-color="#10b981" stop-opacity="0.8" />
-                  <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.8" />
+                  <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.8" />
                 </linearGradient>
                 <filter id="glow">
                   <feGaussianBlur stdDeviation="3" result="coloredBlur" />
@@ -1899,11 +1889,11 @@
               <!-- URL Input Card -->
               <g transform="translate(30, 48)" filter="url(#glow)">
                 <rect width="180" height="68" rx="14" fill="#141729" stroke="url(#grad2)" stroke-width="1.5" />
-                <rect x="12" y="14" width="8" height="8" rx="2" fill="#7c3aed" opacity="0.6" />
+                <rect x="12" y="14" width="8" height="8" rx="2" fill="#0e7490" opacity="0.6" />
                 <rect x="26" y="14" width="80" height="8" rx="2" fill="#334155" />
                 <rect x="12" y="30" width="120" height="6" rx="2" fill="#1e293b" />
                 <rect x="12" y="42" width="90" height="6" rx="2" fill="#1e293b" />
-                <text x="138" y="22" font-size="8" fill="#a78bfa" font-family="monospace" font-weight="700">URL</text>
+                <text x="138" y="22" font-size="8" fill="#67e8f9" font-family="monospace" font-weight="700">URL</text>
               </g>
 
               <!-- Arrow 1 -->
@@ -1911,37 +1901,37 @@
                 <line x1="212" y1="120" x2="240" y2="148" stroke="url(#grad1)" stroke-width="2" stroke-dasharray="4,3">
                   <animate attributeName="stroke-dashoffset" values="0;-14" dur="1.2s" repeatCount="indefinite" />
                 </line>
-                <polygon points="238,145 244,152 232,152" fill="#7c3aed" opacity="0.7" />
+                <polygon points="238,145 244,152 232,152" fill="#0e7490" opacity="0.7" />
               </g>
 
               <!-- Feature Extraction Node -->
               <g transform="translate(200, 148)" filter="url(#glow)">
                 <rect width="178" height="84" rx="16" fill="#13162b" stroke="url(#grad1)" stroke-width="2" />
-                <text x="89" y="20" font-size="8.5" fill="#a78bfa" font-family="Inter,sans-serif" font-weight="700"
+                <text x="89" y="20" font-size="8.5" fill="#67e8f9" font-family="Inter,sans-serif" font-weight="700"
                   text-anchor="middle">FEATURE EXTRACTION</text>
                 <!-- Feature chips -->
-                <rect x="10" y="28" width="46" height="16" rx="6" fill="rgba(124,58,237,0.2)"
-                  stroke="rgba(124,58,237,0.35)" stroke-width="1" />
-                <text x="33" y="40" font-size="7" fill="#c4b5fd" font-family="monospace"
+                <rect x="10" y="28" width="46" height="16" rx="6" fill="rgba(14,116,144,0.2)"
+                  stroke="rgba(14,116,144,0.35)" stroke-width="1" />
+                <text x="33" y="40" font-size="7" fill="#a5f3fc" font-family="monospace"
                   text-anchor="middle">URLLen</text>
-                <rect x="62" y="28" width="46" height="16" rx="6" fill="rgba(79,70,229,0.2)"
-                  stroke="rgba(79,70,229,0.35)" stroke-width="1" />
-                <text x="85" y="40" font-size="7" fill="#a5b4fc" font-family="monospace"
+                <rect x="62" y="28" width="46" height="16" rx="6" fill="rgba(29,78,216,0.2)"
+                  stroke="rgba(29,78,216,0.35)" stroke-width="1" />
+                <text x="85" y="40" font-size="7" fill="#bfdbfe" font-family="monospace"
                   text-anchor="middle">IsHTTPS</text>
-                <rect x="114" y="28" width="52" height="16" rx="6" fill="rgba(6,182,212,0.2)"
-                  stroke="rgba(6,182,212,0.35)" stroke-width="1" />
+                <rect x="114" y="28" width="52" height="16" rx="6" fill="rgba(34,211,238,0.2)"
+                  stroke="rgba(34,211,238,0.35)" stroke-width="1" />
                 <text x="140" y="40" font-size="7" fill="#67e8f9" font-family="monospace"
                   text-anchor="middle">SubDom</text>
-                <rect x="10" y="50" width="60" height="16" rx="6" fill="rgba(124,58,237,0.15)"
-                  stroke="rgba(124,58,237,0.25)" stroke-width="1" />
-                <text x="40" y="62" font-size="7" fill="#c4b5fd" font-family="monospace"
+                <rect x="10" y="50" width="60" height="16" rx="6" fill="rgba(14,116,144,0.15)"
+                  stroke="rgba(14,116,144,0.25)" stroke-width="1" />
+                <text x="40" y="62" font-size="7" fill="#a5f3fc" font-family="monospace"
                   text-anchor="middle">DomainLen</text>
-                <rect x="76" y="50" width="54" height="16" rx="6" fill="rgba(79,70,229,0.15)"
-                  stroke="rgba(79,70,229,0.25)" stroke-width="1" />
-                <text x="103" y="62" font-size="7" fill="#a5b4fc" font-family="monospace"
+                <rect x="76" y="50" width="54" height="16" rx="6" fill="rgba(29,78,216,0.15)"
+                  stroke="rgba(29,78,216,0.25)" stroke-width="1" />
+                <text x="103" y="62" font-size="7" fill="#bfdbfe" font-family="monospace"
                   text-anchor="middle">DigitRatio</text>
-                <rect x="136" y="50" width="32" height="16" rx="6" fill="rgba(6,182,212,0.15)"
-                  stroke="rgba(6,182,212,0.25)" stroke-width="1" />
+                <rect x="136" y="50" width="32" height="16" rx="6" fill="rgba(34,211,238,0.15)"
+                  stroke="rgba(34,211,238,0.25)" stroke-width="1" />
                 <text x="152" y="62" font-size="7" fill="#67e8f9" font-family="monospace"
                   text-anchor="middle">+10</text>
               </g>
@@ -1951,28 +1941,28 @@
                 <line x1="289" y1="234" x2="289" y2="262" stroke="url(#grad1)" stroke-width="2" stroke-dasharray="4,3">
                   <animate attributeName="stroke-dashoffset" values="0;-14" dur="1.2s" repeatCount="indefinite" />
                 </line>
-                <polygon points="283,260 295,260 289,268" fill="#4f46e5" opacity="0.7" />
+                <polygon points="283,260 295,260 289,268" fill="#1d4ed8" opacity="0.7" />
               </g>
 
               <!-- ML Model Node -->
               <g transform="translate(172, 268)" filter="url(#glow)">
                 <rect width="234" height="76" rx="16" fill="#0f1224" stroke="url(#grad2)" stroke-width="2.5" />
                 <!-- Brain-like dots -->
-                <circle cx="32" cy="30" r="10" fill="rgba(124,58,237,0.25)" stroke="rgba(124,58,237,0.5)"
+                <circle cx="32" cy="30" r="10" fill="rgba(14,116,144,0.25)" stroke="rgba(14,116,144,0.5)"
                   stroke-width="1.5" />
-                <circle cx="52" cy="46" r="7" fill="rgba(79,70,229,0.25)" stroke="rgba(79,70,229,0.5)"
+                <circle cx="52" cy="46" r="7" fill="rgba(29,78,216,0.25)" stroke="rgba(29,78,216,0.5)"
                   stroke-width="1.5" />
-                <circle cx="72" cy="28" r="9" fill="rgba(124,58,237,0.2)" stroke="rgba(124,58,237,0.45)"
+                <circle cx="72" cy="28" r="9" fill="rgba(14,116,144,0.2)" stroke="rgba(14,116,144,0.45)"
                   stroke-width="1.5" />
-                <line x1="32" y1="30" x2="52" y2="46" stroke="#7c3aed" stroke-width="1" opacity="0.5" />
-                <line x1="52" y1="46" x2="72" y2="28" stroke="#4f46e5" stroke-width="1" opacity="0.5" />
-                <line x1="32" y1="30" x2="72" y2="28" stroke="#7c3aed" stroke-width="1" opacity="0.4" />
-                <text x="128" y="26" font-size="9" fill="#c4b5fd" font-family="Inter,sans-serif" font-weight="700"
-                  text-anchor="middle">{{ model_name }}</text>
+                <line x1="32" y1="30" x2="52" y2="46" stroke="#0e7490" stroke-width="1" opacity="0.5" />
+                <line x1="52" y1="46" x2="72" y2="28" stroke="#1d4ed8" stroke-width="1" opacity="0.5" />
+                <line x1="32" y1="30" x2="72" y2="28" stroke="#0e7490" stroke-width="1" opacity="0.4" />
+                <text x="128" y="26" font-size="9" fill="#a5f3fc" font-family="Inter,sans-serif" font-weight="700"
+                  text-anchor="middle">HistGradientBoosting</text>
                 <text x="128" y="40" font-size="8" fill="#64748b" font-family="Inter,sans-serif" text-anchor="middle">ML
                   Classifier</text>
-                <text x="128" y="58" font-size="7.5" fill="#94a3b8" font-family="monospace" text-anchor="middle">{{ '%.2f'|format(evaluation_metrics['Accuracy']) }}%
-                  Accuracy · {{ '%.2f'|format(evaluation_metrics['ROC-AUC Phishing']) }}% AUC</text>
+                <text x="128" y="58" font-size="7.5" fill="#94a3b8" font-family="monospace" text-anchor="middle">96.72%
+                  Accuracy · 98.80% AUC</text>
               </g>
 
               <!-- Arrow 3 -->
@@ -2000,18 +1990,18 @@
               </g>
 
               <!-- Floating data particles -->
-              <circle cx="170" cy="80" r="3" fill="#7c3aed" opacity="0.4">
+              <circle cx="170" cy="80" r="3" fill="#0e7490" opacity="0.4">
                 <animate attributeName="cy" values="80;72;80" dur="3s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="0.4;0.8;0.4" dur="3s" repeatCount="indefinite" />
               </circle>
-              <circle cx="420" cy="160" r="4" fill="#06b6d4" opacity="0.35">
+              <circle cx="420" cy="160" r="4" fill="#22d3ee" opacity="0.35">
                 <animate attributeName="cy" values="160;150;160" dur="4s" repeatCount="indefinite" />
                 <animate attributeName="opacity" values="0.35;0.7;0.35" dur="4s" repeatCount="indefinite" />
               </circle>
-              <circle cx="60" cy="260" r="3" fill="#4f46e5" opacity="0.4">
+              <circle cx="60" cy="260" r="3" fill="#1d4ed8" opacity="0.4">
                 <animate attributeName="cy" values="260;252;260" dur="3.5s" repeatCount="indefinite" />
               </circle>
-              <circle cx="430" cy="320" r="5" fill="#a78bfa" opacity="0.3">
+              <circle cx="430" cy="320" r="5" fill="#67e8f9" opacity="0.3">
                 <animate attributeName="cy" values="320;310;320" dur="5s" repeatCount="indefinite" />
               </circle>
             </svg>
@@ -2027,30 +2017,30 @@
        ================================================================ -->
   <section id="stats" aria-labelledby="stats-label">
     <div class="container">
-      <p class="stats-label" id="stats-label">Final Test Metrics &middot; Unseen Domains</p>
+      <p class="stats-label" id="stats-label">Model Evaluation Metrics</p>
       <div class="stats-grid" role="list">
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
-          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Accuracy']) }}%</span>
+          <span class="stat-value">96.72%</span>
           <span class="stat-name">Model Accuracy</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
-          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Phishing F1']) }}%</span>
-          <span class="stat-name">Phishing F1</span>
+          <span class="stat-value">97.16%</span>
+          <span class="stat-name">F1 Score</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></span>
-          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['ROC-AUC Phishing']) }}%</span>
-          <span class="stat-name">ROC-AUC Phishing</span>
+          <span class="stat-value">98.80%</span>
+          <span class="stat-name">ROC-AUC Score</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-chart-simple"></i></span>
-          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Phishing Recall']) }}%</span>
+          <span class="stat-value">94.05%</span>
           <span class="stat-name">Phishing Recall</span>
         </div>
 
@@ -2070,12 +2060,11 @@
       </div>
 
       <div class="scanner-card">
-        <form class="scanner-form" action="{{ url_for('predict') }}" method="post" id="scanner-form" aria-label="URL scanner form">
+        <form class="scanner-form" action="/predict" method="post" id="scanner-form" aria-label="URL scanner form">
           <div class="scanner-input-wrap">
             <input type="text" name="url" id="url-input" placeholder="https://example.com" required
               aria-label="Enter a URL to analyze" autocomplete="off" spellcheck="false"
-              {% if error %}aria-invalid="true" aria-describedby="scanner-error"{% endif %}
-              value="{{ url }}" />
+              value="{{ url if url else '' }}" />
             <button type="submit" class="scanner-btn" id="scanner-submit-btn" aria-label="Analyze the URL">
               <span class="scanner-btn-icon" aria-hidden="true"></span>
               <span class="scanner-btn-label"><i class="fa-solid fa-magnifying-glass"></i> Analyze URL</span>
@@ -2089,9 +2078,6 @@
             The system analyzes URL structure only and does not visit the submitted website.
           </p>
         </form>
-        {% if error %}
-        <p id="scanner-error" class="scanner-error" role="alert">{{ error }}</p>
-        {% endif %}
       </div>
     </div>
   </section>
@@ -2124,7 +2110,7 @@
 
               <!-- Big label -->
               <div class="result-status-label" id="result-heading">
-                {% if result == 'Legitimate' %}LEGITIMATE{% else %}PHISHING{% endif %}
+                {% if result == 'Legitimate' %}SAFE{% else %}PHISHING{% endif %}
               </div>
 
               <!-- Sub label -->
@@ -2149,15 +2135,15 @@
             </div>
 
             <!-- Confidence circle -->
-            <div class="result-confidence-group" aria-label="Confidence score: {{ '%.2f'|format(confidence_score) }}%">
+            <div class="result-confidence-group" aria-label="Confidence score: {{ confidence_score }}%">
               <div class="confidence-circle-wrap">
                 <svg class="confidence-circle-svg" width="110" height="110" viewBox="0 0 110 110" aria-hidden="true">
                   <circle class="confidence-ring-bg" cx="55" cy="55" r="45" />
                   <circle class="confidence-ring-fill" cx="55" cy="55" r="45"
-                    style="--confidence: {{ '%.2f'|format(confidence_score) }};" />
+                    style="--confidence: {{ confidence_score }};" />
                 </svg>
                 <div class="confidence-center-text">
-                  <span class="confidence-pct">{{ '%.2f'|format(confidence_score) }}%</span>
+                  <span class="confidence-pct">{{ confidence_score }}%</span>
                   <span class="confidence-label-text">Confidence</span>
                 </div>
               </div>
@@ -2168,9 +2154,7 @@
           <!-- Bottom: analyzed URL -->
           <div class="result-bottom">
             <div class="analyzed-url-label">Analyzed URL</div>
-            <div class="analyzed-url-value" aria-label="Analyzed URL: {{ normalized_url }}">{{ normalized_url }}</div>
-            <p class="analysis-note">Phishing probability: {{ '%.2f'|format(risk_score) }}%</p>
-            <p class="analysis-note">Prediction model: {{ model_name }}</p>
+            <div class="analyzed-url-value" aria-label="Analyzed URL: {{ url }}">{{ url }}</div>
           </div>
         </div>
 
@@ -2285,7 +2269,7 @@
             <span class="how-step-num-inner">03</span>
           </div>
           <h3 class="how-step-title">ML Prediction</h3>
-          <p class="how-step-desc">A trained {{ model_name }} classifier evaluates the extracted features and
+          <p class="how-step-desc">A trained HistGradientBoosting classifier evaluates the extracted features and
             returns a prediction with a confidence score.</p>
         </div>
 
@@ -2319,7 +2303,8 @@
             <div class="about-card-icon" aria-hidden="true"><i class="fa-solid fa-robot"></i></div>
             <div>
               <div class="about-card-title">Machine Learning Powered</div>
-              <div class="about-card-desc">Uses a {{ model_name }} model trained on the combined PhiUSIIL and additional labeled URL datasets.</div>
+              <div class="about-card-desc">Uses a HistGradientBoosting Classifier trained on a large dataset of labeled
+                URLs.</div>
             </div>
           </div>
 
@@ -2394,8 +2379,8 @@
         <div class="tech-card" role="listitem">
           <div class="tech-icon" aria-hidden="true"><i class="fa-solid fa-tree"></i></div>
           <div>
-            <div class="tech-name">{{ model_name }}</div>
-            <div class="tech-desc">Classifier selected using validation on separate domains</div>
+            <div class="tech-name">HistGradientBoosting</div>
+            <div class="tech-desc">Gradient boosting classifier optimized for tabular data</div>
           </div>
         </div>
 
@@ -2420,7 +2405,7 @@
       <!-- Architecture flow -->
       <div class="arch-title">System Architecture</div>
       <div class="arch-flow" role="img"
-        aria-label="System architecture: Browser sends URL to FastAPI, which extracts features, passes them to {{ model_name }} model, and returns a prediction rendered by Jinja2">
+        aria-label="System architecture: Browser sends URL to FastAPI, which extracts features, passes them to HistGradientBoosting model, and returns a prediction rendered by Jinja2">
 
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-solid fa-globe"></i></span>
@@ -2441,14 +2426,14 @@
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-solid fa-gears"></i></span>
           <span class="arch-node-name">Feature Extractor</span>
-          <span class="arch-node-role">{{ feature_count }} URL features</span>
+          <span class="arch-node-role">15 URL features</span>
         </div>
 
         <div class="arch-arrow" aria-hidden="true">→</div>
 
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-brands fa-python"></i></span>
-          <span class="arch-node-name">{{ model_name }}</span>
+          <span class="arch-node-name">HGB Model</span>
           <span class="arch-node-role">predict + proba</span>
         </div>
 
@@ -2473,12 +2458,12 @@
 
         <div class="model-left">
           <span class="section-label">Model</span>
-          <div class="model-badge" aria-label="Model type"><i class="fa-solid fa-tree"></i> {{ model_name }}
+          <div class="model-badge" aria-label="Model type"><i class="fa-solid fa-tree"></i> HistGradientBoosting
             Classifier</div>
           <h2 id="model-heading">Model Information</h2>
           <p>
-            Our detection system uses a {{ model_name }} Classifier trained to distinguish phishing and legitimate
-            URLs based on lexical and structural URL patterns. Test metrics below come from held-out domains.
+            Our detection system uses a HistGradientBoosting Classifier trained to distinguish phishing and legitimate
+            URLs based on lexical and structural URL patterns..
           </p>
           <div class="model-limitation">
             <i class="fa-solid fa-triangle-exclamation"></i> <strong>Limitation:</strong> The model evaluates structural
@@ -2489,20 +2474,54 @@
         </div>
 
         <div class="model-metrics" aria-label="Model evaluation metrics">
-          {% for label, value in evaluation_metrics.items() %}
+
           <div class="metric-row">
-            <span class="metric-row-label">{{ label }}</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="{{ value }}" aria-valuemin="0"
-              aria-valuemax="100" aria-label="{{ label }}: {{ '%.2f'|format(value) }}%">
-              <div class="metric-row-bar" style="width: {{ value }}%;"></div>
+            <span class="metric-row-label">Accuracy</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="96.72" aria-valuemin="0"
+              aria-valuemax="100" aria-label="96.72%">
+              <div class="metric-row-bar" style="width: 96.72%;"></div>
             </div>
-            <span class="metric-row-val">{{ '%.2f'|format(value) }}%</span>
+            <span class="metric-row-val">96.72%</span>
           </div>
-          {% endfor %}
+
+          <div class="metric-row">
+            <span class="metric-row-label">F1 Score</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="97.16" aria-valuemin="0"
+              aria-valuemax="100" aria-label="97.16%">
+              <div class="metric-row-bar" style="width: 97.16%;"></div>
+            </div>
+            <span class="metric-row-val">97.16%</span>
+          </div>
+
+          <div class="metric-row">
+            <span class="metric-row-label">ROC-AUC</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="98.80" aria-valuemin="0"
+              aria-valuemax="100" aria-label="98.80%">
+              <div class="metric-row-bar" style="width: 98.80%;"></div>
+            </div>
+            <span class="metric-row-val">98.80%</span>
+          </div>
+
+          <div class="metric-row">
+            <span class="metric-row-label">Phishing Recall</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="94.05" aria-valuemin="0"
+              aria-valuemax="100" aria-label="94.05%">
+              <div class="metric-row-bar" style="width: 94.05%;"></div>
+            </div>
+            <span class="metric-row-val">94.05%</span>
+          </div>
+
           <div class="metric-row">
             <span class="metric-row-label">Input Features</span>
-            <span class="metric-row-val">{{ feature_count }} features</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="100" aria-valuemin="0"
+              aria-valuemax="100" aria-label="15 features">
+              <div class="metric-row-bar"
+                style="width: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));">
+              </div>
+            </div>
+            <span class="metric-row-val">15 feats</span>
           </div>
+
         </div>
       </div>
     </div>
@@ -2601,7 +2620,7 @@
 
     /* ---- Auto-scroll to result after prediction ---- */
     (function () {
-      const resultEl = document.getElementById('scanner-error') || document.getElementById('result-card');
+      const resultEl = document.getElementById('result-card');
       if (resultEl) {
         // Small delay so animation can play
         setTimeout(() => {
