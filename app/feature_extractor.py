@@ -1,6 +1,25 @@
 from urllib.parse import urlparse, urlunparse
 import ipaddress
 
+
+FEATURE_COLUMNS = [
+    "URLLength",
+    "DomainLength",
+    "IsDomainIP",
+    "TLDLength",
+    "NoOfSubDomain",
+    "NoOfLettersInURL",
+    "LetterRatioInURL",
+    "NoOfDegitsInURL",
+    "DegitRatioInURL",
+    "NoOfEqualsInURL",
+    "NoOfQMarkInURL",
+    "NoOfAmpersandInURL",
+    "NoOfOtherSpecialCharsInURL",
+    "SpacialCharRatioInURL",
+    "IsHTTPS"
+]
+
 def normalize_url(url):
     url = str(url).strip()
 
@@ -104,3 +123,8 @@ def extract_features(url):
         "SpacialCharRatioInURL": special_char_ratio,
         "IsHTTPS": is_https
     }
+    
+def get_hostname(url):
+    normalized = normalize_url(url)
+    parsed = urlparse(normalized)
+    return (parsed.hostname or "").lower()

@@ -5,4 +5,3 @@ __pycache__/
 .venv/
 venv/
 dataset_master_semua_fitur.csv
-dataset_training_15_fitur.csv

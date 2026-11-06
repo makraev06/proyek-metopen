@@ -14,7 +14,7 @@
   <!-- SEO -->
   <title>LinkSafe — AI-Powered Phishing URL Detection</title>
   <meta name="description"
-    content="Analyze URLs with machine learning. LinkSafe uses a trained HistGradientBoosting model to detect potentially suspicious phishing links in seconds." />
+    content="Analyze URLs with machine learning. LinkSafe uses a trained {{ model_name }} model to detect potentially suspicious phishing links in seconds." />
   <meta name="keywords" content="phishing detection, URL scanner, machine learning, cybersecurity, AI, safe browsing" />
   <meta name="robots" content="index, follow" />
 
@@ -1761,6 +1761,16 @@
         transform: rotate(90deg);
       }
     }
+    .scanner-error {
+      margin-top: 16px;
+      color: var(--danger-red);
+      font-size: 0.9rem;
+    }
+
+    .result-status-label {
+      overflow-wrap: anywhere;
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+    }
   </style>
 </head>
 
@@ -1958,11 +1968,11 @@
                 <line x1="52" y1="46" x2="72" y2="28" stroke="#4f46e5" stroke-width="1" opacity="0.5" />
                 <line x1="32" y1="30" x2="72" y2="28" stroke="#7c3aed" stroke-width="1" opacity="0.4" />
                 <text x="128" y="26" font-size="9" fill="#c4b5fd" font-family="Inter,sans-serif" font-weight="700"
-                  text-anchor="middle">HistGradientBoosting</text>
+                  text-anchor="middle">{{ model_name }}</text>
                 <text x="128" y="40" font-size="8" fill="#64748b" font-family="Inter,sans-serif" text-anchor="middle">ML
                   Classifier</text>
-                <text x="128" y="58" font-size="7.5" fill="#94a3b8" font-family="monospace" text-anchor="middle">96.72%
-                  Accuracy · 98.80% AUC</text>
+                <text x="128" y="58" font-size="7.5" fill="#94a3b8" font-family="monospace" text-anchor="middle">{{ '%.2f'|format(evaluation_metrics['Accuracy']) }}%
+                  Accuracy · {{ '%.2f'|format(evaluation_metrics['ROC-AUC Phishing']) }}% AUC</text>
               </g>
 
               <!-- Arrow 3 -->
@@ -2017,30 +2027,30 @@
        ================================================================ -->
   <section id="stats" aria-labelledby="stats-label">
     <div class="container">
-      <p class="stats-label" id="stats-label">Model Evaluation Metrics</p>
+      <p class="stats-label" id="stats-label">Final Test Metrics &middot; Unseen Domains</p>
       <div class="stats-grid" role="list">
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-check"></i></span>
-          <span class="stat-value">96.72%</span>
+          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Accuracy']) }}%</span>
           <span class="stat-name">Model Accuracy</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
-          <span class="stat-value">97.16%</span>
-          <span class="stat-name">F1 Score</span>
+          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Phishing F1']) }}%</span>
+          <span class="stat-name">Phishing F1</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-chart-line"></i></span>
-          <span class="stat-value">98.80%</span>
-          <span class="stat-name">ROC-AUC Score</span>
+          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['ROC-AUC Phishing']) }}%</span>
+          <span class="stat-name">ROC-AUC Phishing</span>
         </div>
 
         <div class="stat-card" role="listitem">
           <span class="stat-icon" aria-hidden="true"><i class="fa-solid fa-chart-simple"></i></span>
-          <span class="stat-value">94.05%</span>
+          <span class="stat-value">{{ '%.2f'|format(evaluation_metrics['Phishing Recall']) }}%</span>
           <span class="stat-name">Phishing Recall</span>
         </div>
 
@@ -2060,11 +2070,12 @@
       </div>
 
       <div class="scanner-card">
-        <form class="scanner-form" action="/predict" method="post" id="scanner-form" aria-label="URL scanner form">
+        <form class="scanner-form" action="{{ url_for('predict') }}" method="post" id="scanner-form" aria-label="URL scanner form">
           <div class="scanner-input-wrap">
             <input type="text" name="url" id="url-input" placeholder="https://example.com" required
               aria-label="Enter a URL to analyze" autocomplete="off" spellcheck="false"
-              value="{{ url if url else '' }}" />
+              {% if error %}aria-invalid="true" aria-describedby="scanner-error"{% endif %}
+              value="{{ url }}" />
             <button type="submit" class="scanner-btn" id="scanner-submit-btn" aria-label="Analyze the URL">
               <span class="scanner-btn-icon" aria-hidden="true"></span>
               <span class="scanner-btn-label"><i class="fa-solid fa-magnifying-glass"></i> Analyze URL</span>
@@ -2078,6 +2089,9 @@
             The system analyzes URL structure only and does not visit the submitted website.
           </p>
         </form>
+        {% if error %}
+        <p id="scanner-error" class="scanner-error" role="alert">{{ error }}</p>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -2110,7 +2124,7 @@
 
               <!-- Big label -->
               <div class="result-status-label" id="result-heading">
-                {% if result == 'Legitimate' %}SAFE{% else %}PHISHING{% endif %}
+                {% if result == 'Legitimate' %}LEGITIMATE{% else %}PHISHING{% endif %}
               </div>
 
               <!-- Sub label -->
@@ -2135,15 +2149,15 @@
             </div>
 
             <!-- Confidence circle -->
-            <div class="result-confidence-group" aria-label="Confidence score: {{ confidence_score }}%">
+            <div class="result-confidence-group" aria-label="Confidence score: {{ '%.2f'|format(confidence_score) }}%">
               <div class="confidence-circle-wrap">
                 <svg class="confidence-circle-svg" width="110" height="110" viewBox="0 0 110 110" aria-hidden="true">
                   <circle class="confidence-ring-bg" cx="55" cy="55" r="45" />
                   <circle class="confidence-ring-fill" cx="55" cy="55" r="45"
-                    style="--confidence: {{ confidence_score }};" />
+                    style="--confidence: {{ '%.2f'|format(confidence_score) }};" />
                 </svg>
                 <div class="confidence-center-text">
-                  <span class="confidence-pct">{{ confidence_score }}%</span>
+                  <span class="confidence-pct">{{ '%.2f'|format(confidence_score) }}%</span>
                   <span class="confidence-label-text">Confidence</span>
                 </div>
               </div>
@@ -2154,7 +2168,9 @@
           <!-- Bottom: analyzed URL -->
           <div class="result-bottom">
             <div class="analyzed-url-label">Analyzed URL</div>
-            <div class="analyzed-url-value" aria-label="Analyzed URL: {{ url }}">{{ url }}</div>
+            <div class="analyzed-url-value" aria-label="Analyzed URL: {{ normalized_url }}">{{ normalized_url }}</div>
+            <p class="analysis-note">Phishing probability: {{ '%.2f'|format(risk_score) }}%</p>
+            <p class="analysis-note">Prediction model: {{ model_name }}</p>
           </div>
         </div>
 
@@ -2269,7 +2285,7 @@
             <span class="how-step-num-inner">03</span>
           </div>
           <h3 class="how-step-title">ML Prediction</h3>
-          <p class="how-step-desc">A trained HistGradientBoosting classifier evaluates the extracted features and
+          <p class="how-step-desc">A trained {{ model_name }} classifier evaluates the extracted features and
             returns a prediction with a confidence score.</p>
         </div>
 
@@ -2303,8 +2319,7 @@
             <div class="about-card-icon" aria-hidden="true"><i class="fa-solid fa-robot"></i></div>
             <div>
               <div class="about-card-title">Machine Learning Powered</div>
-              <div class="about-card-desc">Uses a HistGradientBoosting Classifier trained on a large dataset of labeled
-                URLs.</div>
+              <div class="about-card-desc">Uses a {{ model_name }} model trained on the combined PhiUSIIL and additional labeled URL datasets.</div>
             </div>
           </div>
 
@@ -2379,8 +2394,8 @@
         <div class="tech-card" role="listitem">
           <div class="tech-icon" aria-hidden="true"><i class="fa-solid fa-tree"></i></div>
           <div>
-            <div class="tech-name">HistGradientBoosting</div>
-            <div class="tech-desc">Gradient boosting classifier optimized for tabular data</div>
+            <div class="tech-name">{{ model_name }}</div>
+            <div class="tech-desc">Classifier selected using validation on separate domains</div>
           </div>
         </div>
 
@@ -2405,7 +2420,7 @@
       <!-- Architecture flow -->
       <div class="arch-title">System Architecture</div>
       <div class="arch-flow" role="img"
-        aria-label="System architecture: Browser sends URL to FastAPI, which extracts features, passes them to HistGradientBoosting model, and returns a prediction rendered by Jinja2">
+        aria-label="System architecture: Browser sends URL to FastAPI, which extracts features, passes them to {{ model_name }} model, and returns a prediction rendered by Jinja2">
 
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-solid fa-globe"></i></span>
@@ -2426,14 +2441,14 @@
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-solid fa-gears"></i></span>
           <span class="arch-node-name">Feature Extractor</span>
-          <span class="arch-node-role">15 URL features</span>
+          <span class="arch-node-role">{{ feature_count }} URL features</span>
         </div>
 
         <div class="arch-arrow" aria-hidden="true">→</div>
 
         <div class="arch-node">
           <span class="arch-node-icon" aria-hidden="true"><i class="fa-brands fa-python"></i></span>
-          <span class="arch-node-name">HGB Model</span>
+          <span class="arch-node-name">{{ model_name }}</span>
           <span class="arch-node-role">predict + proba</span>
         </div>
 
@@ -2458,12 +2473,12 @@
 
         <div class="model-left">
           <span class="section-label">Model</span>
-          <div class="model-badge" aria-label="Model type"><i class="fa-solid fa-tree"></i> HistGradientBoosting
+          <div class="model-badge" aria-label="Model type"><i class="fa-solid fa-tree"></i> {{ model_name }}
             Classifier</div>
           <h2 id="model-heading">Model Information</h2>
           <p>
-            Our detection system uses a HistGradientBoosting Classifier trained to distinguish phishing and legitimate
-            URLs based on lexical and structural URL patterns..
+            Our detection system uses a {{ model_name }} Classifier trained to distinguish phishing and legitimate
+            URLs based on lexical and structural URL patterns. Test metrics below come from held-out domains.
           </p>
           <div class="model-limitation">
             <i class="fa-solid fa-triangle-exclamation"></i> <strong>Limitation:</strong> The model evaluates structural
@@ -2474,54 +2489,20 @@
         </div>
 
         <div class="model-metrics" aria-label="Model evaluation metrics">
-
+          {% for label, value in evaluation_metrics.items() %}
           <div class="metric-row">
-            <span class="metric-row-label">Accuracy</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="96.72" aria-valuemin="0"
-              aria-valuemax="100" aria-label="96.72%">
-              <div class="metric-row-bar" style="width: 96.72%;"></div>
+            <span class="metric-row-label">{{ label }}</span>
+            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="{{ value }}" aria-valuemin="0"
+              aria-valuemax="100" aria-label="{{ label }}: {{ '%.2f'|format(value) }}%">
+              <div class="metric-row-bar" style="width: {{ value }}%;"></div>
             </div>
-            <span class="metric-row-val">96.72%</span>
+            <span class="metric-row-val">{{ '%.2f'|format(value) }}%</span>
           </div>
-
-          <div class="metric-row">
-            <span class="metric-row-label">F1 Score</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="97.16" aria-valuemin="0"
-              aria-valuemax="100" aria-label="97.16%">
-              <div class="metric-row-bar" style="width: 97.16%;"></div>
-            </div>
-            <span class="metric-row-val">97.16%</span>
-          </div>
-
-          <div class="metric-row">
-            <span class="metric-row-label">ROC-AUC</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="98.80" aria-valuemin="0"
-              aria-valuemax="100" aria-label="98.80%">
-              <div class="metric-row-bar" style="width: 98.80%;"></div>
-            </div>
-            <span class="metric-row-val">98.80%</span>
-          </div>
-
-          <div class="metric-row">
-            <span class="metric-row-label">Phishing Recall</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="94.05" aria-valuemin="0"
-              aria-valuemax="100" aria-label="94.05%">
-              <div class="metric-row-bar" style="width: 94.05%;"></div>
-            </div>
-            <span class="metric-row-val">94.05%</span>
-          </div>
-
+          {% endfor %}
           <div class="metric-row">
             <span class="metric-row-label">Input Features</span>
-            <div class="metric-row-bar-wrap" role="progressbar" aria-valuenow="100" aria-valuemin="0"
-              aria-valuemax="100" aria-label="15 features">
-              <div class="metric-row-bar"
-                style="width: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-violet));">
-              </div>
-            </div>
-            <span class="metric-row-val">15 feats</span>
+            <span class="metric-row-val">{{ feature_count }} features</span>
           </div>
-
         </div>
       </div>
     </div>
@@ -2620,7 +2601,7 @@
 
     /* ---- Auto-scroll to result after prediction ---- */
     (function () {
-      const resultEl = document.getElementById('result-card');
+      const resultEl = document.getElementById('scanner-error') || document.getElementById('result-card');
       if (resultEl) {
         // Small delay so animation can play
         setTimeout(() => {

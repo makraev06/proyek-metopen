@@ -1,376 +1,209 @@
-# 🔗 Phishing URL Detection
+# Phishing URL Detection
 
-A machine learning-based web application for detecting whether a URL is potentially **phishing** or **legitimate** based on its lexical and structural characteristics.
+LinkSafe is a FastAPI web application that classifies URLs as **Phishing (`0`)** or **Legitimate (`1`)** using 15 lexical and structural URL features. Users submit a URL and receive the prediction, model confidence, phishing probability, and URL analysis details.
 
-The application allows users to paste a URL into a web interface. The system automatically extracts URL-based features and uses a trained machine learning model to generate a prediction.
+The application analyzes URL text. It does not visit the destination, inspect HTML, or perform live DNS lookups.
 
----
+## Dataset
 
-## 📌 Project Overview
+Training uses a combined dataset containing **PhiUSIIL** and additional labeled URL collections. The local master file, `dataset_master_semua_fitur.csv`, preserves 98 columns, including source metadata and these feature groups:
 
-Phishing websites are commonly designed to imitate legitimate websites in order to steal sensitive information such as credentials, personal data, or financial information.
+| Prefix | Contents |
+|---|---|
+| `phi_*` | Original PhiUSIIL features |
+| `baru_*` | Features from the additional URL datasets |
+| `dns_*` | DNS-related values retained in the research data |
+| `model_*` | The 15 standardized URL features used by the classifier |
 
-This project develops a machine learning classification system that analyzes the structure of a URL and predicts whether it is:
+Missing source-specific features are retained rather than automatically filled with zero. Only columns needed for analysis and training are loaded into memory. DNS-related archive columns are not inputs to the deployed model.
 
-- **Phishing (`0`)**
-- **Legitimate (`1`)**
+PhiUSIIL source: [UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+website).
 
-Unlike a traditional machine learning demo where users manually enter feature values, this application only requires the user to provide a URL. Feature extraction and prediction are performed automatically by the system.
+The master CSV is ignored by Git and must be supplied locally for training. The web application needs the saved model and metadata, not the training CSV.
 
----
+## Notebook workflow
 
-## 📊 Dataset
+The main notebook is [v2.ipynb](v2.ipynb), organized into six sections:
 
-The project uses the **PhiUSIIL Phishing URL Dataset** from the UCI Machine Learning Repository.
+1. **Data Understanding:** load the master and inspect columns, labels, missing values, and duplicates.
+2. **Exploratory Data Analysis:** examine class distribution, URL/domain characteristics, correlations, and source differences. Normalize URLs, discard conflicting labels, and remove duplicate normalized URLs.
+3. **Initial Model Experiment:** compare Logistic Regression, Random Forest, and HistGradientBoosting using a random split within development data, with optional Random Forest tuning.
+4. **URL Feature Engineering for Deployment:** verify features against the shared extractor and prepare final domain-based partitions.
+5. **Final Model Evaluation:** compare candidates on domain-separated validation, optionally tune Random Forest, select the final model, and evaluate it on the reserved test set. Audit results by source and URLs with/without `www`.
+6. **Model Saving and Inference Testing:** save the estimator as a pickle file, export JSON metadata, reload it, and test raw URL predictions.
 
-The original dataset contains approximately **235,000 URLs** with phishing and legitimate samples, along with URL and website-related features.
+### Splitting, tuning, and model selection
 
-**Dataset source:**  
-UCI Machine Learning Repository — PhiUSIIL Phishing URL Dataset
+Before the initial experiment, **20% of registered-domain groups are reserved for the final test**. The initial random-split experiment uses only the remaining development data; its tuning results are not automatically transferred to final modeling.
 
-https://archive.ics.uci.edu/dataset/967/phiusiil+phishing+url+website
+For final modeling, development data is split again by registered domain, allocating 25% of those groups to validation. The target overall group proportions are approximately **60% train / 20% validation / 20% test**. Row proportions can differ because domains contain different numbers of URLs.
 
-### Target Labels
+Registered domains are identified with `tldextract`: `www.example.com` and `login.example.com` belong to the same group. The notebook asserts zero registered-domain overlap between final partitions.
 
-| Label | Class |
-|------:|-------|
-| `0` | Phishing |
-| `1` | Legitimate |
+Candidates are ranked on **validation** by Phishing F1, then Phishing Recall, then ROC-AUC Phishing. The selected configuration is retrained on train + validation and evaluated on the reserved test set. Test scores do not determine the selected model.
 
----
+Optional Random Forest tuning uses `RandomizedSearchCV` with `GroupKFold` and optimizes **Phishing F1 (`pos_label=0`)**. Final tuning uses only the final training partition. Phishing precision, recall, and F1 refer to label 0; ROC-AUC uses the probability of label 0.
 
-## 🔄 Machine Learning Workflow
+## URL features
 
-The main workflow of this project consists of:
-
-1. Dataset Understanding
-2. Exploratory Data Analysis (EDA)
-3. Data Cleaning and Duplicate Handling
-4. Initial Feature Selection
-5. Baseline Model Training
-6. Model Comparison
-7. Hyperparameter Tuning
-8. URL Feature Engineering
-9. URL Normalization
-10. Domain-Based Train-Test Split
-11. Final Model Evaluation
-12. Model Saving
-13. FastAPI Web Integration
-
----
-
-## 🔍 Exploratory Data Analysis
-
-Several analyses were performed to understand the dataset before model training, including:
-
-- Target class distribution
-- Missing value inspection
-- Duplicate URL inspection
-- URL length distribution
-- Domain length distribution
-- Feature correlation with the target
-- URL and domain characteristics
-
-Duplicate URLs were removed before further modeling to reduce the possibility of data leakage.
-
----
-
-## ⚙️ Feature Engineering
-
-During the initial experiment, the models used features already provided by the PhiUSIIL dataset.
-
-However, not every precomputed feature can be reproduced consistently when the application receives a completely new raw URL.
-
-Since the deployed application only receives a URL from the user, a custom **URL feature extractor** was developed.
-
-The same feature extraction process is used during both:
+[app/feature_extractor.py](app/feature_extractor.py) defines normalization, extraction, and `FEATURE_COLUMNS`. The master stores these features under `model_*`; the notebook removes that prefix when loading them.
 
 ```text
-Training
-   ↓
-URL Feature Extraction
-   ↓
-Machine Learning Model
+URLLength
+DomainLength
+IsDomainIP
+TLDLength
+NoOfSubDomain
+NoOfLettersInURL
+LetterRatioInURL
+NoOfDegitsInURL
+DegitRatioInURL
+NoOfEqualsInURL
+NoOfQMarkInURL
+NoOfAmpersandInURL
+NoOfOtherSpecialCharsInURL
+SpacialCharRatioInURL
+IsHTTPS
 ```
 
-and:
+Names retain the spelling used by the extractor and model. Normalization adds `http://` when a scheme is absent, lowercases the scheme and network location, and removes a solitary root `/`. The same extractor is used during notebook consistency checks and web predictions.
+
+The backend constructs its input DataFrame in metadata order and checks that the extractor, model, and metadata agree on features and labels.
+
+## Current saved model
+
+The current artifact selects **HistGradientBoosting**. These final test results are recorded in [models/phishing_url_metadata.json](models/phishing_url_metadata.json), with `debug_rows=0`:
+
+| Metric | Final test result |
+|---|---:|
+| Accuracy | 93.29% |
+| Phishing Precision | 98.49% |
+| Phishing Recall | 88.32% |
+| Phishing F1 | 93.12% |
+| ROC-AUC Phishing | 97.08% |
+
+These are test results for the selected model. Candidate comparisons are exported separately from validation results.
+
+The table describes the current artifact snapshot. After retraining, consult the regenerated metadata for updated scores. The web page reads the model name, feature count, and test metrics from metadata at startup.
+
+### Saved artifacts
+
+| File | Purpose |
+|---|---|
+| `models/phishing_url_model.pkl` | Fitted scikit-learn estimator saved with `pickle.dump` and loaded with `pickle.load` |
+| `models/phishing_url_metadata.json` | Feature order, labels, selected model, test metrics, scikit-learn version, and debug sample setting |
+| `results/hasil_validasi_model.csv` | Candidate scores on domain-based validation |
+| `results/hasil_test_final.csv` | Selected model's final test scores |
+| `results/hasil_test_www.csv` | Test audit for URLs with and without `www` |
+| `results/hasil_test_per_sumber.csv` | Test audit by source dataset |
+
+Keep model and metadata from the same training run. The PKL contains the estimator itself; metadata is a separate JSON file. Load pickle artifacts only from trusted sources.
+
+## Web application
+
+The backend is [app/main.py](app/main.py); the interface is [app/templates/index.html](app/templates/index.html).
 
 ```text
-User URL
-   ↓
-URL Feature Extraction
-   ↓
-Trained Model
-   ↓
-Prediction
+URL form -> Validation and normalization -> 15 features in metadata order
+         -> PKL model: predict + predict_proba -> PHISHING or LEGITIMATE
 ```
 
-This approach helps prevent **training-serving skew**, where features used during model training differ from those generated during real-world inference.
+The result displays the predicted class, model name, normalized URL, HTTPS use, domain, URL/domain lengths, subdomain count, top-level domain, digits, and special characters.
 
-URL normalization is also applied before feature extraction to improve consistency between equivalent URL representations.
+**Confidence** is the model probability assigned to the predicted class. **Phishing probability** is the probability assigned to label 0. Both are percentages. The home page also displays final test metrics from metadata.
 
----
+| Route | Input | Response |
+|---|---|---|
+| `GET /` | None | Scanner page and current model information |
+| `POST /predict` | Form field `url` | HTML prediction page, or an inline validation error with HTTP status 400 |
 
-## 🧠 Models
+The prediction endpoint accepts form data and returns HTML. Empty or malformed URLs and unsupported schemes receive a validation error.
 
-Three classification algorithms were evaluated:
+## Running locally
 
-### Logistic Regression
+The current model has been verified with **Python 3.11** and **scikit-learn 1.9.0**. Use an environment compatible with the model's recorded scikit-learn version.
 
-Used as a baseline linear classification model.
+From the project root, create a fresh environment. Example for Windows PowerShell:
 
-### Random Forest
+```powershell
+py -3.11 -m venv venv
+.\venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+python -m pip install "scikit-learn==1.9.0"
+```
 
-An ensemble tree-based model capable of learning nonlinear relationships between URL features.
+If an existing environment uses a different Python version or fails to import scikit-learn, create a fresh environment rather than reusing its binary packages.
 
-Random Forest was also used in the **hyperparameter tuning** experiment using cross-validation.
+Ensure both `models/phishing_url_model.pkl` and `models/phishing_url_metadata.json` are present. If unavailable, run the training notebook first.
 
-### HistGradientBoosting
+```powershell
+python -m uvicorn app.main:app --reload
+```
 
-A gradient boosting-based classifier designed to efficiently learn complex nonlinear patterns.
+Open [http://127.0.0.1:8000](http://127.0.0.1:8000). After retraining, restart the server to reload the model and metadata.
 
-After final evaluation, **HistGradientBoosting was selected as the final model** because it provided the best overall balance across the evaluation metrics.
+## Running the notebook
 
----
+Install additional notebook dependencies in the same environment:
 
-## 🔧 Hyperparameter Tuning
+```powershell
+python -m pip install numpy matplotlib tldextract ipykernel
+```
 
-Hyperparameter tuning was performed on the Random Forest model.
+Open the project folder in VS Code, select that environment as the notebook kernel, and open `v2.ipynb`. Place `dataset_master_semua_fitur.csv` in the project root and run all cells in order with the project root as the working directory.
 
-The tuning process evaluated parameters such as:
+| Setting | Default | Purpose |
+|---|---|---|
+| `PHISHING_DEBUG_ROWS` environment variable | `0` | Controls `DEBUG_ROWS`; 0 uses all rows, a positive value samples rows for a quick check |
+| `RUN_INITIAL_RF_TUNING` | `False` | Enables Random Forest tuning in the exploratory experiment |
+| `RUN_RF_TUNING` | `False` | Enables tuning for final domain-based candidates |
+| `EXPORT_TRAIN_CSV` | `False` | Exports `dataset_training_15_fitur.csv` containing URL, label, source, `has_www`, and the 15 model features |
 
-- Number of estimators
-- Maximum tree depth
-- Minimum samples required for splitting
-- Minimum samples per leaf
-- Number of features considered at each split
+For a quick check, set the environment variable in the terminal before starting the notebook kernel:
 
-The optimization focused particularly on **Phishing Recall**, since failing to detect a phishing URL is considered more critical than incorrectly flagging a legitimate URL.
+```powershell
+$env:PHISHING_DEBUG_ROWS = "1500"
+```
 
-The tuning experiment showed that optimized parameters did not necessarily improve all test-set metrics compared with the original Random Forest configuration.
+For full training and report results, set it to `"0"`, restart the kernel, and run all cells again. Model-saving cells write to the same paths on every run, including debug runs; use full-data artifacts for the final application and report. Saving also regenerates metadata, and evaluation exports the CSV reports.
 
----
-
-## 🌐 Domain-Based Evaluation
-
-Instead of relying only on a traditional random train-test split, the final evaluation uses **GroupShuffleSplit based on URL domains**.
-
-This ensures that URLs belonging to the same domain are not distributed across both training and testing data.
-
-For example:
+## Project structure
 
 ```text
-Training:
-example.com/page1
-example.com/page2
-
-Testing:
-another-domain.com/page1
+Phishing-URL-Detection/
+|-- app/
+|   |-- feature_extractor.py
+|   |-- main.py
+|   `-- templates/
+|       `-- index.html
+|-- models/
+|   |-- phishing_url_model.pkl
+|   `-- phishing_url_metadata.json
+|-- results/
+|   |-- hasil_validasi_model.csv
+|   |-- hasil_test_final.csv
+|   |-- hasil_test_www.csv
+|   `-- hasil_test_per_sumber.csv
+|-- dataset_master_semua_fitur.csv    # Local training input; ignored by Git
+|-- dataset_training_15_fitur.csv     # Optional generated export
+|-- v2.ipynb
+|-- requirements.txt
+|-- .gitignore
+`-- README.md
 ```
 
-rather than:
+## Technology
 
-```text
-Training:
-example.com/page1
+- **Training:** NumPy, pandas, scikit-learn, Matplotlib, and tldextract.
+- **Persistence:** Python's standard-library `pickle` and JSON.
+- **Backend:** FastAPI, Uvicorn, and python-multipart.
+- **Interface:** HTML, CSS, JavaScript, and Jinja2.
+- **Notebook:** Jupyter-compatible kernel in VS Code.
 
-Testing:
-example.com/page2
-```
+## Limitations
 
-The domain overlap between the final training and testing sets was verified to be **0**.
+Predictions describe learned URL patterns and are supporting information, not a guarantee that a destination is safe or malicious. HTTPS does not establish legitimacy. The application does not inspect page content, reputation, blacklist status, malware, domain ownership, or live DNS data.
 
-This creates a stricter and more realistic evaluation scenario because the model is tested on domains that were not seen during training.
+Results can differ across dataset sources, time periods, and URLs with or without `www`; the exported audits help assess those differences. Model probabilities are not a complete measurement of real-world security risk.
 
----
-
-## 📈 Final Model Comparison
-
-| Model | Accuracy | F1-Score | ROC-AUC | Phishing Recall |
-|---|---:|---:|---:|---:|
-| Logistic Regression | 95.21% | 95.90% | 98.09% | 90.77% |
-| Random Forest | 96.68% | 97.12% | 98.71% | **94.06%** |
-| **HistGradientBoosting** | **96.72%** | **97.16%** | **98.80%** | 94.05% |
-
-HistGradientBoosting achieved the highest **Accuracy, F1-Score, and ROC-AUC**.
-
-Random Forest achieved a slightly higher Phishing Recall, but the difference was very small. Considering overall classification performance, HistGradientBoosting was selected as the final model.
-
----
-
-## 🏆 Final Model
-
-The deployed classifier uses:
-
-**HistGradientBoostingClassifier**
-
-Final evaluation results:
-
-```text
-Accuracy        : 96.72%
-F1-Score        : 97.16%
-ROC-AUC         : 98.80%
-Phishing Recall : 94.05%
-```
-
-The final trained model is stored as:
-
-```text
-models/phishing_hgb_normalized.pkl
-```
-
----
-
-## 💻 Web Application
-
-The machine learning model is integrated into a web application using **FastAPI**.
-
-Users can enter a URL through the scanner interface and receive:
-
-- Predicted class
-- Model confidence score
-- URL analysis information
-- Phishing or legitimate classification
-
-### Prediction Flow
-
-```text
-User enters URL
-        ↓
-URL Normalization
-        ↓
-Feature Extraction
-        ↓
-HistGradientBoosting Model
-        ↓
-Prediction
-        ↓
-SAFE / PHISHING
-```
-
-The frontend is rendered using HTML/CSS with Jinja2 templates, while FastAPI handles the backend prediction process.
-
----
-
-## 🛠️ Tech Stack
-
-**Machine Learning**
-- Python
-- Pandas
-- Scikit-learn
-- Joblib
-
-**Backend**
-- FastAPI
-- Uvicorn
-
-**Frontend**
-- HTML
-- CSS
-- Jinja2
-
-**Development**
-- Jupyter Notebook
-- Visual Studio Code
-- Git
-- GitHub
-
----
-
-## 📁 Project Structure
-
-```text
-phishing-url-detection/
-│
-├── app/
-│   ├── templates/
-│   │   └── index.html
-│   ├── feature_extractor.py
-│   └── main.py
-│
-├── models/
-│   └── phishing_hgb_normalized.pkl
-│
-├── phising_detection.ipynb
-├── requirements.txt
-├── .gitignore
-└── README.md
-```
-
-The original dataset is not included in the repository and can be obtained from the UCI Machine Learning Repository.
-
----
-
-## 🚀 Running Locally
-
-### 1. Clone the repository
-
-```bash
-git clone https://github.com/YOUR-USERNAME/phishing-url-detection.git
-cd phishing-url-detection
-```
-
-### 2. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 3. Run the FastAPI application
-
-```bash
-uvicorn app.main:app --reload
-```
-
-### 4. Open the application
-
-Open the following address in your browser:
-
-```text
-http://127.0.0.1:8000
-```
-
----
-
-## ⚠️ Model Limitations
-
-The model analyzes patterns derived primarily from the **URL structure itself**.
-
-It does not perform a complete security inspection of the destination website, such as:
-
-- Website reputation checking
-- Real-time blacklist lookup
-- Full webpage content inspection
-- Malware analysis
-- Domain ownership verification
-
-Therefore, the prediction should be interpreted as a **machine learning-based assessment**, not as a guarantee that a website is completely safe or malicious.
-
----
-
-## 🔮 Future Improvements
-
-Potential improvements include:
-
-- Improving URL feature engineering for unseen URL structures
-- Probability calibration for more reliable confidence scores
-- Adding domain reputation information
-- Integrating real-time phishing intelligence APIs
-- Improving robustness against new phishing techniques
-- Model monitoring and logging
-- Automated retraining pipeline
-- Containerization using Docker
-
----
-
-## 🌐 Live Demo
-
-> Deployment link will be added after the application is deployed.
-
----
-
-## 📄 License
-
-This project is intended for educational and research purposes.
-
-The PhiUSIIL dataset is provided separately through the UCI Machine Learning Repository and is subject to its respective license.
+This project is intended for educational and research use. Dataset usage remains subject to the terms of each source.

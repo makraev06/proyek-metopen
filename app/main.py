@@ -1,127 +1,103 @@
-from fastapi import FastAPI, Request, Form
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+import json
+import pickle
+from pathlib import Path
 from urllib.parse import urlparse
 
-import joblib
 import pandas as pd
+from fastapi import FastAPI, Form, Request
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
-from app.feature_extractor import extract_features, normalize_url
-
-
-app = FastAPI(
-    title="Phishing URL Detection"
-)
-
-templates = Jinja2Templates(
-    directory="app/templates"
-)
+from app.feature_extractor import FEATURE_COLUMNS, extract_features, normalize_url
 
 
-model = joblib.load(
-    "./models/phishing_hgb_normalized.pkl"
-)
-test_urls = [
-    "https://www.apple.com",
-    "https://www.apple.com/"
-]
-#testt
-for test_url in test_urls:
-    test_features = extract_features(test_url)
-    test_df = pd.DataFrame([test_features])
+PROJECT_DIR = Path(__file__).resolve().parent.parent
+MODEL_PATH = PROJECT_DIR / 'models' / 'phishing_url_model.pkl'
+METADATA_PATH = PROJECT_DIR / 'models' / 'phishing_url_metadata.json'
 
-    test_prob = model.predict_proba(test_df)[0]
-    phishing_index = list(model.classes_).index(0)
+with MODEL_PATH.open('rb') as model_file:
+    model = pickle.load(model_file)
+metadata = json.loads(METADATA_PATH.read_text(encoding='utf-8'))
+feature_columns = metadata['feature_columns']
+labels = {int(label): name for label, name in metadata['labels'].items()}
 
-    print("\nTEST URL   :", repr(test_url))
-    print("NORMALIZED :", repr(normalize_url(test_url)))
-    print("FEATURES   :", test_features)
-    print(
-        "RISK       :",
-        test_prob[phishing_index] * 100
+if len(feature_columns) != len(FEATURE_COLUMNS) or set(feature_columns) != set(FEATURE_COLUMNS):
+    raise ValueError('Fitur pada metadata tidak sesuai dengan app/feature_extractor.py.')
+if list(model.feature_names_in_) != feature_columns:
+    raise ValueError('Urutan fitur model tidak sesuai dengan metadata.')
+if set(model.classes_) != {0, 1} or labels != {0: 'Phishing', 1: 'Legitimate'}:
+    raise ValueError('Model dan metadata harus memakai label 0=Phishing, 1=Legitimate.')
+
+MODEL_CONTEXT = {
+    'model_name': metadata['selected_model'],
+    'feature_count': len(feature_columns),
+    'evaluation_metrics': {
+        name: round(float(value) * 100, 2)
+        for name, value in metadata['test_metrics'].items()
+    },
+}
+
+app = FastAPI(title='Phishing URL Detection')
+templates = Jinja2Templates(directory=str(PROJECT_DIR / 'app' / 'templates'))
+
+
+def render_page(request, *, status_code=200, **context):
+    return templates.TemplateResponse(
+        request=request,
+        name='index.html',
+        context={**MODEL_CONTEXT, 'url': '', 'result': None, 'error': None, **context},
+        status_code=status_code,
     )
-@app.get("/", response_class=HTMLResponse)
+
+
+@app.get('/', response_class=HTMLResponse)
 def home(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={}
-    )
+    return render_page(request)
 
-@app.post("/predict", response_class=HTMLResponse)
-def predict(
-    request: Request,
-    url: str = Form(...)
-):
-    features = extract_features(url)
 
-    print("\n====================")
-    print("RAW        :", repr(url))
-    print("NORMALIZED :", repr(normalize_url(url)))
-    print("FEATURES   :", features)
-    print("====================")
+@app.post('/predict', response_class=HTMLResponse)
+def predict(request: Request, url: str = Form('')):
+    submitted_url = url.strip()
+    try:
+        normalized = normalize_url(submitted_url)
+        parsed = urlparse(normalized)
+        if (not submitted_url or parsed.scheme not in {'http', 'https'}
+                or not parsed.hostname or any(char.isspace() for char in normalized)):
+            raise ValueError('Invalid URL')
+        # Accessing port also checks invalid and out-of-range port numbers.
+        _ = parsed.port
+        features = extract_features(normalized)
+    except ValueError:
+        return render_page(
+            request, status_code=400, url=submitted_url,
+            error='Enter a valid HTTP or HTTPS URL, for example https://example.com.',
+        )
 
-    features_df = pd.DataFrame([features])
-
-    prediction = model.predict(features_df)[0]
-
+    features_df = pd.DataFrame([features], columns=feature_columns)
+    prediction = int(model.predict(features_df)[0])
     probabilities = model.predict_proba(features_df)[0]
+    class_order = list(model.classes_)
+    risk_score = round(float(probabilities[class_order.index(0)]) * 100, 2)
+    confidence_score = round(float(probabilities[class_order.index(prediction)]) * 100, 2)
 
-    phishing_index = list(model.classes_).index(0)
+    domain = parsed.hostname
+    domain_parts = domain.split('.')
+    tld = ('.' + domain_parts[-1]
+           if not features['IsDomainIP'] and len(domain_parts) > 1 else 'N/A')
 
-    phishing_probability = probabilities[phishing_index]
-
-    risk_score = round(
-        float(phishing_probability) * 100,
-        2
-    )
-
-    print("PREDICTION :", prediction)
-    print("PROBABILITY:", probabilities)
-    print("RISK       :", risk_score)
-
-    if prediction == 0:
-        result = "Phishing"
-    else:
-        result = "Legitimate"
-
-    # Confidence = probability of the predicted class
-    if result == "Legitimate":
-        confidence_score = round(100 - risk_score, 2)
-    else:
-        confidence_score = risk_score
-
-    # --- Display-friendly URL analysis values ---
-    normalized = normalize_url(url)
-    parsed = urlparse(normalized)
-    domain = parsed.hostname or ""
-    domain_parts = domain.split(".")
-    tld = "." + domain_parts[-1] if len(domain_parts) > 1 else "N/A"
-
-    display_https = "Yes" if features["IsHTTPS"] == 1 else "No"
-    display_url_length = features["URLLength"]
-    display_domain_length = features["DomainLength"]
-    display_subdomains = features["NoOfSubDomain"]
-    display_tld = tld
-    display_digits = features["NoOfDegitsInURL"]
-    display_special_chars = features["NoOfOtherSpecialCharsInURL"]
-    display_domain = domain
-
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={
-            "url": url,
-            "result": result,
-            "risk_score": risk_score,
-            "confidence_score": confidence_score,
-            "display_https": display_https,
-            "display_url_length": display_url_length,
-            "display_domain_length": display_domain_length,
-            "display_subdomains": display_subdomains,
-            "display_tld": display_tld,
-            "display_digits": display_digits,
-            "display_special_chars": display_special_chars,
-            "display_domain": display_domain,
-        }
+    return render_page(
+        request,
+        url=submitted_url,
+        normalized_url=normalized,
+        result=labels[prediction],
+        risk_score=risk_score,
+        confidence_score=confidence_score,
+        display_https='Yes' if features['IsHTTPS'] else 'No',
+        display_url_length=features['URLLength'],
+        display_domain_length=features['DomainLength'],
+        display_subdomains=features['NoOfSubDomain'],
+        display_tld=tld,
+        display_digits=features['NoOfDegitsInURL'],
+        display_special_chars=features['NoOfOtherSpecialCharsInURL'],
+        display_domain=domain,
     )
